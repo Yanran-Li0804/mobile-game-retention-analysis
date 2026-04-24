@@ -1,0 +1,227 @@
+<html>
+<head>
+<title>mobile-game-retention-churn-analysis.ipynb</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #080808;}
+.s1 { color: #0033b3;}
+.s2 { color: #8c8c8c; font-style: italic;}
+.s3 { color: #067d17;}
+.s4 { color: #1750eb;}
+.ls0 { height: 1px; border-width: 0; color: #dfe1e5; background-color:#dfe1e5}
+</style>
+</head>
+<body bgcolor="#ffffff">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#c0c0c0" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+mobile-game-retention-churn-analysis.ipynb</font>
+</center></td></tr></table>
+<pre><span class="s0">#%% md 
+# 🎮 Mobile Game Retention Analysis <hr class="ls0">#%% md 
+This project analyzed user behavior to understand retention, churn, and engagement in a mobile game. <hr class="ls0">#%% md 
+## 1. Project Introduction <hr class="ls0">#%% md 
+### Objective 
+This project analyzes player behavior in a mobile game to understand user retention patterns, engagement levels, and player segmentation. 
+ 
+The goal is to identify how players interact with the game over time and provide actionable product insights. <hr class="ls0">#%% md 
+### Data Description 
+ 
+Two datasets are used: 
+ 
+#### users table 
+- user_id: unique player identifier 
+- install_date: date when the player installed the game 
+#### events table 
+- user_id: unique player identifier 
+- event_date: date of in-game activity 
+- event_type: type of in-game event (session_start) <hr class="ls0">#%% md 
+## 2. Data Loading &amp; Cleaning <hr class="ls0">#%% md 
+### 2.1 Load datasets <hr class="ls0">#%% 
+</span><span class="s1">import </span><span class="s0">pandas </span><span class="s1">as </span><span class="s0">pd</span>
+
+<span class="s2"># import datasets</span>
+<span class="s0">users = pd.read_excel(</span><span class="s3">r&quot;C:\Users\lyrgl\Desktop\mobile game data\users.xlsx&quot;</span><span class="s0">)</span>
+<span class="s0">events = pd.read_excel(</span><span class="s3">r&quot;C:\Users\lyrgl\Desktop\mobile game data\events.xlsx&quot;</span><span class="s0">)</span><hr class="ls0"><span class="s0">#%% md 
+## 2.2 Data types &amp; preprocessing <hr class="ls0">#%% md 
+- Convert date columns to datetime 
+- Merge datasets on `user_id` <hr class="ls0">#%% 
+</span><span class="s2"># transform time form</span>
+<span class="s0">users[</span><span class="s3">'install_date'</span><span class="s0">] = pd.to_datetime(users[</span><span class="s3">'install_date'</span><span class="s0">])</span>
+<span class="s0">events[</span><span class="s3">'event_date'</span><span class="s0">] = pd.to_datetime(events[</span><span class="s3">'event_date'</span><span class="s0">])</span>
+
+<span class="s2"># merge</span>
+<span class="s0">df = events.merge(users, on=</span><span class="s3">'user_id'</span><span class="s0">, how=</span><span class="s3">'left'</span><span class="s0">)</span>
+
+<span class="s0">df.head()</span><hr class="ls0"><span class="s0">#%% md 
+DAU, MAU <hr class="ls0">#%% 
+</span><span class="s2"># DAU - Daily Active Users</span>
+<span class="s2"># How many unique players played today?</span>
+
+<span class="s0">dau = events.groupby(</span><span class="s3">'event_date'</span><span class="s0">)[</span><span class="s3">'user_id'</span><span class="s0">].nunique()</span>
+<span class="s0">display(dau)</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s2"># MAU - Monthly Active Users</span>
+<span class="s2"># How many players played this month at least once?</span>
+<span class="s0">events[</span><span class="s3">'month'</span><span class="s0">] = events.event_date.dt.to_period(</span><span class="s3">'M'</span><span class="s0">)</span>
+<span class="s0">mau = events.groupby(</span><span class="s3">&quot;month&quot;</span><span class="s0">)[</span><span class="s3">&quot;user_id&quot;</span><span class="s0">].nunique()</span>
+
+<span class="s0">mau</span><hr class="ls0"><span class="s0">#%% md 
+## 3 Retention Analysis 
+Objective: 
+ 
+Understand how player retention evolves over time after installation. <hr class="ls0">#%% md 
+## 2.3 retention metrics 
+- Create `days_since_install` <hr class="ls0">#%% 
+df[</span><span class="s3">'days_since_install'</span><span class="s0">] = (df[</span><span class="s3">'event_date'</span><span class="s0">] - df[</span><span class="s3">'install_date'</span><span class="s0">]).dt.days</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s1">def </span><span class="s0">retention(day):</span>
+    <span class="s1">return </span><span class="s0">(</span>
+        <span class="s0">df[df.days_since_install == day][</span><span class="s3">&quot;user_id&quot;</span><span class="s0">].nunique()</span>
+        <span class="s0">/ users[</span><span class="s3">&quot;user_id&quot;</span><span class="s0">].nunique()</span>
+    <span class="s0">)</span>
+
+<span class="s0">retention_metrics = {</span>
+    <span class="s3">&quot;D1&quot;</span><span class="s0">: retention(</span><span class="s4">1</span><span class="s0">),</span>
+    <span class="s3">&quot;D7&quot;</span><span class="s0">: retention(</span><span class="s4">7</span><span class="s0">),</span>
+    <span class="s3">&quot;D30&quot;</span><span class="s0">: retention(</span><span class="s4">30</span><span class="s0">)</span>
+<span class="s0">}</span><hr class="ls0"><span class="s0">#%% 
+print(retention_metrics)</span><hr class="ls0"><span class="s0">#%% 
+retention_df = pd.DataFrame(retention_metrics.items(), columns=[</span><span class="s3">&quot;Metric&quot;</span><span class="s0">, </span><span class="s3">&quot;Retention Rate&quot;</span><span class="s0">])</span>
+<span class="s0">retention_df</span><hr class="ls0"><span class="s0">#%% 
+retention_df[</span><span class="s3">&quot;Retention Rate (%)&quot;</span><span class="s0">] = retention_df[</span><span class="s3">&quot;Retention Rate&quot;</span><span class="s0">] * </span><span class="s4">100</span>
+<span class="s0">retention_df</span><hr class="ls0"><span class="s0">#%% md 
+### 3.4 Retention Curve (Overall Behavior) <hr class="ls0">#%% 
+retention_curve = (</span>
+    <span class="s0">df.groupby(</span><span class="s3">&quot;days_since_install&quot;</span><span class="s0">)[</span><span class="s3">&quot;user_id&quot;</span><span class="s0">]</span>
+    <span class="s0">.nunique()</span>
+    <span class="s0">/ df[</span><span class="s3">&quot;user_id&quot;</span><span class="s0">].nunique()</span>
+<span class="s0">)</span>
+
+
+<span class="s1">import </span><span class="s0">matplotlib.pyplot </span><span class="s1">as </span><span class="s0">plt</span>
+
+<span class="s0">plt.figure(figsize=(</span><span class="s4">8</span><span class="s0">,</span><span class="s4">5</span><span class="s0">))</span>
+<span class="s0">retention_curve.plot()</span>
+<span class="s0">plt.title(</span><span class="s3">&quot;Retention Curve&quot;</span><span class="s0">)</span>
+<span class="s0">plt.xlabel(</span><span class="s3">&quot;Days Since Install&quot;</span><span class="s0">)</span>
+<span class="s0">plt.ylabel(</span><span class="s3">&quot;Retention Rate&quot;</span><span class="s0">)</span>
+<span class="s0">plt.show()</span><hr class="ls0"><span class="s0">#%% 
+retention_df.set_index(</span><span class="s3">&quot;Metric&quot;</span><span class="s0">)[</span><span class="s3">&quot;Retention Rate&quot;</span><span class="s0">].plot(</span>
+    <span class="s0">kind=</span><span class="s3">&quot;bar&quot;</span><span class="s0">,</span>
+    <span class="s0">title=</span><span class="s3">&quot;D1 / D7 / D30 Retention&quot;</span>
+<span class="s0">)</span><hr class="ls0"><span class="s0">#%% md 
+## Cohort Analysis <hr class="ls0">#%% md 
+### 3.1 Cohort size calculation 
+Define number of users per install cohort. <hr class="ls0">#%% 
+cohort_size = users.groupby(</span><span class="s3">'install_date'</span><span class="s0">)[</span><span class="s3">'user_id'</span><span class="s0">].nunique()</span>
+<span class="s0">cohort_size.head()</span><hr class="ls0"><span class="s0">#%% md 
+### 3.3 Retention rate <hr class="ls0">#%% 
+retention = retention.merge(cohort_size.rename(</span><span class="s3">'cohort_size'</span><span class="s0">), on=</span><span class="s3">'install_date'</span><span class="s0">)</span>
+
+<span class="s0">retention[</span><span class="s3">'retention_rate'</span><span class="s0">] = retention[</span><span class="s3">'user_id'</span><span class="s0">]/retention[</span><span class="s3">'cohort_size'</span><span class="s0">]</span><hr class="ls0"><span class="s0">#%% md 
+### 3.5 Cohort heatmap 
+- Compare retention across install cohorts <hr class="ls0">#%% 
+cohort_pivot = retention.pivot_table(</span>
+    <span class="s0">index=</span><span class="s3">'install_date'</span><span class="s0">,</span>
+    <span class="s0">columns=</span><span class="s3">'days_since_install'</span><span class="s0">,</span>
+    <span class="s0">values=</span><span class="s3">'retention_rate'</span>
+<span class="s0">)</span>
+
+<span class="s0">cohort_pivot.head()</span><hr class="ls0"><span class="s0">#%% 
+</span><span class="s1">import </span><span class="s0">matplotlib.pyplot </span><span class="s1">as </span><span class="s0">plt</span>
+<span class="s1">import </span><span class="s0">seaborn </span><span class="s1">as </span><span class="s0">sns</span>
+
+<span class="s0">plt.figure(figsize=(</span><span class="s4">12</span><span class="s0">, </span><span class="s4">6</span><span class="s0">))</span>
+<span class="s0">sns.heatmap(cohort_pivot, cmap=</span><span class="s3">&quot;Blues&quot;</span><span class="s0">)</span>
+<span class="s0">plt.title(</span><span class="s3">'Retention Cohort Heatmap'</span><span class="s0">)</span>
+<span class="s0">plt.show()</span><hr class="ls0"><span class="s0">#%% md 
+### 3.6 Key Insights 
+- Strong Day 1 retention indicates effective onboarding 
+- Significant drop occurs between Day 2–Day 3 
+- Retention continues to decline but stabilizes at a low baseline <hr class="ls0">#%% md 
+## 4. Engagement Analysis 
+ 
+Objective: 
+ 
+Understand how frequently players engage with the game. <hr class="ls0">#%% md 
+### 4.1 Sessions per User 
+ <hr class="ls0">#%% 
+user_activity = df.groupby(</span><span class="s3">'user_id'</span><span class="s0">).size().reset_index(name=</span><span class="s3">'total_sessions'</span><span class="s0">)</span><hr class="ls0"><span class="s0">#%% md 
+### 4.2 Distribution of Engagement <hr class="ls0">#%% 
+user_activity[</span><span class="s3">'total_sessions'</span><span class="s0">].hist(bins=</span><span class="s4">50</span><span class="s0">)</span><hr class="ls0"><span class="s0">#%% md 
+### 4.3 Insights 
+- Engagement is highly skewed 
+- A small group of players accounts for most activity <hr class="ls0">#%% md 
+## 5. Player Segmentation 
+ 
+Objective: Segement players based on engagment level. <hr class="ls0">#%% md 
+### 5.1 Create Segments <hr class="ls0">#%% 
+user_activity[</span><span class="s3">'segment'</span><span class="s0">] = pd.qcut(user_activity[</span><span class="s3">'total_sessions'</span><span class="s0">],q=</span><span class="s4">3</span><span class="s0">, labels=[</span><span class="s3">'low'</span><span class="s0">, </span><span class="s3">'medium'</span><span class="s0">, </span><span class="s3">'high'</span><span class="s0">])</span>
+
+<span class="s0">user_activity.head()</span><hr class="ls0"><span class="s0">#%% md 
+### 5.2 Segment Distribution <hr class="ls0">#%% 
+segment_summary = user_activity[</span><span class="s3">'segment'</span><span class="s0">].value_counts().reset_index()</span>
+<span class="s0">segment_summary.columns = [</span><span class="s3">'segment'</span><span class="s0">, </span><span class="s3">'count'</span><span class="s0">]</span>
+
+<span class="s0">segment_summary[</span><span class="s3">'share'</span><span class="s0">] = segment_summary[</span><span class="s3">'count'</span><span class="s0">] / segment_summary[</span><span class="s3">'count'</span><span class="s0">].sum()</span>
+
+<span class="s0">segment_summary</span><hr class="ls0"><span class="s0">#%% md 
+## 6. Segment-Level Retention Analysis 
+Objective: 
+ Analyze how retention behavior differs across player engagement segments <hr class="ls0">#%% md 
+### 6.1 Daily Users Table <hr class="ls0">#%% 
+daily_users = df[[</span><span class="s3">'user_id'</span><span class="s0">, </span><span class="s3">'install_date'</span><span class="s0">, </span><span class="s3">'event_date'</span><span class="s0">]].drop_duplicates()</span>
+
+<span class="s0">daily_users[</span><span class="s3">'days_since_install'</span><span class="s0">] = (</span>
+    <span class="s0">daily_users[</span><span class="s3">'event_date'</span><span class="s0">] - daily_users[</span><span class="s3">'install_date'</span><span class="s0">]</span>
+<span class="s0">).dt.days</span><hr class="ls0"><span class="s0">#%% 
+daily_users = daily_users.merge(</span>
+    <span class="s0">user_activity[[</span><span class="s3">'user_id'</span><span class="s0">, </span><span class="s3">'segment'</span><span class="s0">]],</span>
+    <span class="s0">on=</span><span class="s3">'user_id'</span><span class="s0">,</span>
+    <span class="s0">how=</span><span class="s3">'left'</span>
+<span class="s0">)</span><hr class="ls0"><span class="s0">#%% md 
+### 6.2 Build Segment-Level Retention Table <hr class="ls0">#%% 
+seg_retention = daily_users.groupby(</span>
+    <span class="s0">[</span><span class="s3">'segment'</span><span class="s0">, </span><span class="s3">'install_date'</span><span class="s0">, </span><span class="s3">'days_since_install'</span><span class="s0">]</span>
+<span class="s0">)[</span><span class="s3">'user_id'</span><span class="s0">].nunique().reset_index()</span><hr class="ls0"><span class="s0">#%% md 
+### 6.3 Compute Segment Cohort Size <hr class="ls0">#%% 
+segment_cohort_size = daily_users.groupby(</span>
+    <span class="s0">[</span><span class="s3">'segment'</span><span class="s0">, </span><span class="s3">'install_date'</span><span class="s0">]</span>
+<span class="s0">)[</span><span class="s3">'user_id'</span><span class="s0">].nunique().reset_index()</span>
+
+<span class="s0">segment_cohort_size.columns = [</span><span class="s3">'segment'</span><span class="s0">, </span><span class="s3">'install_date'</span><span class="s0">, </span><span class="s3">'cohort_size'</span><span class="s0">]</span><hr class="ls0"><span class="s0">#%% md 
+### 6.4 Merge Cohort Size <hr class="ls0">#%% 
+seg_retention = seg_retention.merge(</span>
+    <span class="s0">segment_cohort_size,</span>
+    <span class="s0">on=[</span><span class="s3">'segment'</span><span class="s0">, </span><span class="s3">'install_date'</span><span class="s0">],</span>
+    <span class="s0">how=</span><span class="s3">'left'</span>
+<span class="s0">)</span><hr class="ls0"><span class="s0">#%% md 
+### 6.5 Calculate Retention Rate <hr class="ls0">#%% 
+seg_retention[</span><span class="s3">'retention_rate'</span><span class="s0">] = (</span>
+    <span class="s0">seg_retention[</span><span class="s3">'user_id'</span><span class="s0">] / seg_retention[</span><span class="s3">'cohort_size'</span><span class="s0">]</span>
+<span class="s0">)</span><hr class="ls0"><span class="s0">#%% md 
+### 6.6 Average Retention Curve by Segment <hr class="ls0">#%% 
+</span><span class="s1">import </span><span class="s0">matplotlib.pyplot </span><span class="s1">as </span><span class="s0">plt</span>
+
+<span class="s0">plt.figure(figsize=(</span><span class="s4">10</span><span class="s0">,</span><span class="s4">6</span><span class="s0">))</span>
+
+<span class="s1">for </span><span class="s0">seg </span><span class="s1">in </span><span class="s0">seg_retention[</span><span class="s3">'segment'</span><span class="s0">].unique():</span>
+    <span class="s0">temp = seg_retention[seg_retention[</span><span class="s3">'segment'</span><span class="s0">] == seg]</span>
+    <span class="s0">avg_curve = temp.groupby(</span><span class="s3">'days_since_install'</span><span class="s0">)[</span><span class="s3">'retention_rate'</span><span class="s0">].mean()</span>
+    <span class="s0">plt.plot(avg_curve, label=seg)</span>
+
+<span class="s0">plt.title(</span><span class="s3">&quot;Retention Curve by Segment&quot;</span><span class="s0">)</span>
+<span class="s0">plt.xlabel(</span><span class="s3">&quot;Days Since Install&quot;</span><span class="s0">)</span>
+<span class="s0">plt.ylabel(</span><span class="s3">&quot;Retention Rate&quot;</span><span class="s0">)</span>
+<span class="s0">plt.legend()</span>
+<span class="s0">plt.show()</span>
+
+<span class="s0">retention_curve = seg_retention.groupby(</span><span class="s3">'days_since_install'</span><span class="s0">)[</span><span class="s3">'retention_rate'</span><span class="s0">].mean()</span><hr class="ls0"><span class="s0">#%% md 
+### 5.4 Key Insights 
+ 
+- Low-engagement users drop off rapidly within the first 1–2 days 
+- Medium-engagement users show moderate retention decay, stabilizing around day ~6 
+- High-engagement users exhibit slow and sustained retention decline over 30+ days 
+- Engagement level is strongly correlated with long-term retention behavior 
+</span></pre>
+</body>
+</html>
