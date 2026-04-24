@@ -13,7 +13,13 @@ A Streamlit dashboard was built to visualize key metrics interactively.
 
 
 ---
+## 📌 Data Source
 
+The dataset used in this project is a publicly available mobile game analytics dataset sourced from Kaggle. 
+
+It is a synthetic / simulated dataset created for learning and portfolio purposes, designed to mimic real-world mobile game user behavior including installs, sessions, and engagement events.
+
+No personally identifiable or production user data is included.
 
 
 ## 📊 Key Metrics
