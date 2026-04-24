@@ -9,6 +9,12 @@ This project analyzes player behavior in a mobile game, focusing on user retenti
 
 
 A Streamlit dashboard was built to visualize key metrics interactively.
+### 📊 Dashboard Preview
+![Retention Curve](images/retention_curve.png)
+![Cohort Retention Heatmap](images/cohort_retention_heatmap.png.png)
+![Engagement Distribution](images/engagement_distribution.png)
+![Segment Distribution](images/segmentation.png)
+![Retention by Player Segment](images/retention_by_segment.png)
 
 
 
