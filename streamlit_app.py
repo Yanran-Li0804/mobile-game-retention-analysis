@@ -1,5 +1,5 @@
 import streamlit as st
-# python -m streamlit run app.py
+# python -m streamlit run Streamlit_app.py
 st.title("🎮 Mobile Game Retention & Engagement Dashboard")
 
 st.markdown("""
@@ -26,12 +26,13 @@ Retention is calculated based on user activity after install date.
 # Step 3：读取数据
 import pandas as pd
 
-kpi = pd.read_csv(r"C:\Users\lyrgl\Desktop\mobile game data\kpi.csv")
-retention = pd.read_csv(r"C:\Users\lyrgl\Desktop\mobile game data\retention_curve.csv")
-heatmap = pd.read_csv(r"C:\Users\lyrgl\Desktop\mobile game data\cohort_heatmap.csv", index_col=0)
-segment = pd.read_csv(r"C:\Users\lyrgl\Desktop\mobile game data\segment_distribution.csv")
+kpi = pd.read_csv("kpi.csv")
+retention = pd.read_csv(r"retention_curve.csv")
+heatmap = pd.read_csv("cohort_heatmap.csv", index_col=0)
+segment = pd.read_csv(r"segment_distribution.csv")
 user_activity = pd.read_csv("user_activity.csv")
 seg_retention = pd.read_csv("seg_retention.csv")
+
 # Step 4：做 KPI（第一行）
 st.subheader("Key Metrics Overview")
 st.markdown("High-level indicators of game scale and early retention performance.")
