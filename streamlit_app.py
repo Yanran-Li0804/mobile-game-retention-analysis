@@ -190,7 +190,7 @@ st.pyplot(fig)
 
 # Step 8：Insights（最后一块）
 
-st.subheader("3. Key Insights")
+st.subheader("4. Key Insights")
 
 st.markdown("""
 - Retention drops sharply within the first 2–3 days, indicating weak early engagement beyond onboarding  
